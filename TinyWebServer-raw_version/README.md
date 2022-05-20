@@ -1,4 +1,4 @@
-原始代码来自于https://github.com/qinguoyi/TinyWebServer网站
+原始代码来自于https://github.com/qinguoyi/TinyWebServer
 ===============
 Raw_version文档
 ===============
