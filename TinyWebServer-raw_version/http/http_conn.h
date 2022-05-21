@@ -42,8 +42,8 @@ public:
     enum CHECK_STATE
     {
         CHECK_STATE_REQUESTLINE = 0,
-        CHECK_STATE_HEADER, // 头错误
-        CHECK_STATE_CONTENT // ???
+        CHECK_STATE_HEADER,
+        CHECK_STATE_CONTENT
     };
     enum HTTP_CODE
     {
@@ -107,26 +107,26 @@ public:
 private:
     int m_sockfd;
     sockaddr_in m_address;
-    char m_read_buf[READ_BUFFER_SIZE]; //对每一个对象存放读数据的地方
-    int m_read_idx; // 指向最后m_read_buf有效数据尾部的最后一个指针。
-    int m_checked_idx;// 初始化从零开始移动的指针，随着解析数据它也会递增，如果行数据正确解析完每一行后指向下一行首。。
+    char m_read_buf[READ_BUFFER_SIZE];
+    int m_read_idx;
+    int m_checked_idx;
     int m_start_line;
     char m_write_buf[WRITE_BUFFER_SIZE];
     int m_write_idx;
     CHECK_STATE m_check_state;
     METHOD m_method;
-    char m_real_file[FILENAME_LEN]; // 文件路径 从根目录开始的
-    char *m_url; // 网址url
+    char m_real_file[FILENAME_LEN];
+    char *m_url;
     char *m_version;
     char *m_host;
     int m_content_length;
     bool m_linger;
-    char *m_file_address; // 通过mmap方式对这个文件地址进行读写操作。
+    char *m_file_address;
     struct stat m_file_stat;
     struct iovec m_iv[2];
     int m_iv_count;
     int cgi;        //是否启用的POST
-    char *m_string; //存储请求头数据 ，内容
+    char *m_string; //存储请求头数据
     int bytes_to_send;
     int bytes_have_send;
 };

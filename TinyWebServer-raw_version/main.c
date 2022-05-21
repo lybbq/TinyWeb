@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
     //创建数据库连接池
     connection_pool *connPool = connection_pool::GetInstance();
-    connPool->init("localhost", "ly", "12345678", "yourdb", 3306, 8);
+    connPool->init("localhost", "root", "root", "qgydb", 3306, 8);
 
     //创建线程池
     threadpool<http_conn> *pool = NULL;
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
     {
         return 1;
     }
-    // 主要的类，用户类
-    http_conn *users = new http_conn[MAX_FD]; 
+
+    http_conn *users = new http_conn[MAX_FD];
     assert(users);
 
     //初始化数据库读取表
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     setnonblocking(pipefd[1]);
     addfd(epollfd, pipefd[0], false);
 
-    addsig(SIGALRM, sig_handler, false); // 时钟
+    addsig(SIGALRM, sig_handler, false);
     addsig(SIGTERM, sig_handler, false);
     bool stop_server = false;
 
@@ -199,8 +199,7 @@ int main(int argc, char *argv[])
                     LOG_ERROR("%s", "Internal server busy");
                     continue;
                 }
-                // 用户类作为线程处理的数据
-                users[connfd].init(connfd, client_address); 
+                users[connfd].init(connfd, client_address);
 
                 //初始化client_data数据
                 //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
@@ -248,7 +247,7 @@ int main(int argc, char *argv[])
 #endif
             }
 
-            else if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) // EPOLLHUP 挂起 ,EPOLLRDHUP TCP连接被对方关闭或对方关闭了写操作，EPOLLERR错误
+            else if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
             {
                 //服务器端关闭连接，移除对应的定时器
                 util_timer *timer = users_timer[sockfd].timer;
@@ -260,7 +259,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            //处理非活动时间信号、停止信号
+            //处理信号
             else if ((sockfd == pipefd[0]) && (events[i].events & EPOLLIN))
             {
                 int sig;
@@ -295,7 +294,7 @@ int main(int argc, char *argv[])
             }
 
             //处理客户连接上接收到的数据
-            else if (events[i].events & EPOLLIN) // 数据可读
+            else if (events[i].events & EPOLLIN)
             {
                 util_timer *timer = users_timer[sockfd].timer;
                 if (users[sockfd].read_once())
@@ -325,7 +324,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            else if (events[i].events & EPOLLOUT) // 数据可写
+            else if (events[i].events & EPOLLOUT)
             {
                 util_timer *timer = users_timer[sockfd].timer;
                 if (users[sockfd].write())
@@ -345,8 +344,8 @@ int main(int argc, char *argv[])
                     }
                 }
                 else
-                { // 写错误时候，关闭连接。
-                    timer->cb_func(&users_timer[sockfd]); 
+                {
+                    timer->cb_func(&users_timer[sockfd]);
                     if (timer)
                     {
                         timer_lst.del_timer(timer);
