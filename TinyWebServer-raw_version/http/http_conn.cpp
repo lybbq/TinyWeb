@@ -1,7 +1,14 @@
 #include "http_conn.h"
-
+#include "../log/log.h"
+#include <map>
 #include <mysql/mysql.h>
 #include <fstream>
+
+//#define connfdET //边缘触发非阻塞
+#define connfdLT //水平触发阻塞
+
+//#define listenfdET //边缘触发非阻塞
+#define listenfdLT //水平触发阻塞
 
 //定义http响应的一些状态信息
 const char *ok_200_title = "OK";
@@ -14,8 +21,12 @@ const char *error_404_form = "The requested file was not found on this server.\n
 const char *error_500_title = "Internal Error";
 const char *error_500_form = "There was an unusual problem serving the request file.\n";
 
-locker m_lock;
+//当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
+const char *doc_root = "/home/qgy/github/TinyWebServer/root";
+
+//将表中的用户名和密码放入map
 map<string, string> users;
+locker m_lock;
 
 void http_conn::initmysql_result(connection_pool *connPool)
 {
@@ -57,15 +68,26 @@ int setnonblocking(int fd)
 }
 
 //将内核事件表注册读事件，ET模式，选择开启EPOLLONESHOT
-void addfd(int epollfd, int fd, bool one_shot, int TRIGMode)
+void addfd(int epollfd, int fd, bool one_shot)
 {
     epoll_event event;
     event.data.fd = fd;
 
-    if (1 == TRIGMode)
-        event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-    else
-        event.events = EPOLLIN | EPOLLRDHUP;
+#ifdef connfdET
+    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+#endif
+
+#ifdef connfdLT
+    event.events = EPOLLIN | EPOLLRDHUP;
+#endif
+
+#ifdef listenfdET
+    event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+#endif
+
+#ifdef listenfdLT
+    event.events = EPOLLIN | EPOLLRDHUP;
+#endif
 
     if (one_shot)
         event.events |= EPOLLONESHOT;
@@ -81,15 +103,18 @@ void removefd(int epollfd, int fd)
 }
 
 //将事件重置为EPOLLONESHOT
-void modfd(int epollfd, int fd, int ev, int TRIGMode)
+void modfd(int epollfd, int fd, int ev)
 {
     epoll_event event;
     event.data.fd = fd;
 
-    if (1 == TRIGMode)
-        event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP;
-    else
-        event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
+#ifdef connfdET
+    event.events = ev | EPOLLET | EPOLLONESHOT | EPOLLRDHUP;
+#endif
+
+#ifdef connfdLT
+    event.events = ev | EPOLLONESHOT | EPOLLRDHUP;
+#endif
 
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &event);
 }
@@ -102,7 +127,6 @@ void http_conn::close_conn(bool real_close)
 {
     if (real_close && (m_sockfd != -1))
     {
-        printf("close %d\n", m_sockfd);
         removefd(m_epollfd, m_sockfd);
         m_sockfd = -1;
         m_user_count--;
@@ -110,24 +134,14 @@ void http_conn::close_conn(bool real_close)
 }
 
 //初始化连接,外部调用初始化套接字地址
-void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int TRIGMode,
-                     int close_log, string user, string passwd, string sqlname)
+void http_conn::init(int sockfd, const sockaddr_in &addr)
 {
     m_sockfd = sockfd;
     m_address = addr;
-
-    addfd(m_epollfd, sockfd, true, m_TRIGMode);
+    //int reuse=1;
+    //setsockopt(m_sockfd,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
+    addfd(m_epollfd, sockfd, true);
     m_user_count++;
-
-    //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
-    doc_root = root;
-    m_TRIGMode = TRIGMode;
-    m_close_log = close_log;
-
-    strcpy(sql_user, user.c_str());
-    strcpy(sql_passwd, passwd.c_str());
-    strcpy(sql_name, sqlname.c_str());
-
     init();
 }
 
@@ -150,10 +164,6 @@ void http_conn::init()
     m_read_idx = 0;
     m_write_idx = 0;
     cgi = 0;
-    m_state = 0;
-    timer_flag = 0;
-    improv = 0;
-
     memset(m_read_buf, '\0', READ_BUFFER_SIZE);
     memset(m_write_buf, '\0', WRITE_BUFFER_SIZE);
     memset(m_real_file, '\0', FILENAME_LEN);
@@ -203,39 +213,38 @@ bool http_conn::read_once()
     }
     int bytes_read = 0;
 
-    //LT读取数据
-    if (0 == m_TRIGMode)
+#ifdef connfdLT
+
+    bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
+    m_read_idx += bytes_read;
+
+    if (bytes_read <= 0)
+    {
+        return false;
+    }
+
+    return true;
+
+#endif
+
+#ifdef connfdET
+    while (true)
     {
         bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
-        m_read_idx += bytes_read;
-
-        if (bytes_read <= 0)
+        if (bytes_read == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+            return false;
+        }
+        else if (bytes_read == 0)
         {
             return false;
         }
-
-        return true;
+        m_read_idx += bytes_read;
     }
-    //ET读数据
-    else
-    {
-        while (true)
-        {
-            bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);
-            if (bytes_read == -1)
-            {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    break;
-                return false;
-            }
-            else if (bytes_read == 0)
-            {
-                return false;
-            }
-            m_read_idx += bytes_read;
-        }
-        return true;
-    }
+    return true;
+#endif
 }
 
 //解析http请求行，获得请求方法，目标url及http版本号
@@ -321,7 +330,9 @@ http_conn::HTTP_CODE http_conn::parse_headers(char *text)
     }
     else
     {
+        //printf("oop!unknow header: %s\n",text);
         LOG_INFO("oop!unknow header: %s", text);
+        Log::get_instance()->flush();
     }
     return NO_REQUEST;
 }
@@ -339,6 +350,7 @@ http_conn::HTTP_CODE http_conn::parse_content(char *text)
     return NO_REQUEST;
 }
 
+//
 http_conn::HTTP_CODE http_conn::process_read()
 {
     LINE_STATUS line_status = LINE_OK;
@@ -350,6 +362,7 @@ http_conn::HTTP_CODE http_conn::process_read()
         text = get_line();
         m_start_line = m_checked_idx;
         LOG_INFO("%s", text);
+        Log::get_instance()->flush();
         switch (m_check_state)
         {
         case CHECK_STATE_REQUESTLINE:
@@ -418,6 +431,7 @@ http_conn::HTTP_CODE http_conn::do_request()
             password[j] = m_string[i];
         password[j] = '\0';
 
+        //同步线程登录校验
         if (*(p + 1) == '3')
         {
             //如果是注册，先检测数据库中是否有重名的
@@ -432,6 +446,7 @@ http_conn::HTTP_CODE http_conn::do_request()
 
             if (users.find(name) == users.end())
             {
+
                 m_lock.lock();
                 int res = mysql_query(mysql, sql_insert);
                 users.insert(pair<string, string>(name, password));
@@ -501,13 +516,10 @@ http_conn::HTTP_CODE http_conn::do_request()
 
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
-
     if (!(m_file_stat.st_mode & S_IROTH))
         return FORBIDDEN_REQUEST;
-
     if (S_ISDIR(m_file_stat.st_mode))
         return BAD_REQUEST;
-
     int fd = open(m_real_file, O_RDONLY);
     m_file_address = (char *)mmap(0, m_file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     close(fd);
@@ -521,13 +533,14 @@ void http_conn::unmap()
         m_file_address = 0;
     }
 }
+
 bool http_conn::write()
 {
     int temp = 0;
 
     if (bytes_to_send == 0)
     {
-        modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+        modfd(m_epollfd, m_sockfd, EPOLLIN);
         init();
         return true;
     }
@@ -540,7 +553,7 @@ bool http_conn::write()
         {
             if (errno == EAGAIN)
             {
-                modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
+                modfd(m_epollfd, m_sockfd, EPOLLOUT);
                 return true;
             }
             unmap();
@@ -564,7 +577,7 @@ bool http_conn::write()
         if (bytes_to_send <= 0)
         {
             unmap();
-            modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+            modfd(m_epollfd, m_sockfd, EPOLLIN);
 
             if (m_linger)
             {
@@ -578,6 +591,7 @@ bool http_conn::write()
         }
     }
 }
+
 bool http_conn::add_response(const char *format, ...)
 {
     if (m_write_idx >= WRITE_BUFFER_SIZE)
@@ -592,9 +606,8 @@ bool http_conn::add_response(const char *format, ...)
     }
     m_write_idx += len;
     va_end(arg_list);
-
     LOG_INFO("request:%s", m_write_buf);
-
+    Log::get_instance()->flush();
     return true;
 }
 bool http_conn::add_status_line(int status, const char *title)
@@ -603,8 +616,9 @@ bool http_conn::add_status_line(int status, const char *title)
 }
 bool http_conn::add_headers(int content_len)
 {
-    return add_content_length(content_len) && add_linger() &&
-           add_blank_line();
+    add_content_length(content_len);
+    add_linger();
+    add_blank_line();
 }
 bool http_conn::add_content_length(int content_len)
 {
@@ -690,7 +704,7 @@ void http_conn::process()
     HTTP_CODE read_ret = process_read();
     if (read_ret == NO_REQUEST)
     {
-        modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+        modfd(m_epollfd, m_sockfd, EPOLLIN);
         return;
     }
     bool write_ret = process_write(read_ret);
@@ -698,5 +712,5 @@ void http_conn::process()
     {
         close_conn();
     }
-    modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
+    modfd(m_epollfd, m_sockfd, EPOLLOUT);
 }
