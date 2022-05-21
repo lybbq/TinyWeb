@@ -8,6 +8,6 @@
     "\\threadpool",
     "\\timer"
   ],
-  "SelectedNode": "\\CGImysql\\sql_connection_pool.cpp",
+  "SelectedNode": "\\http\\http_conn.cpp",
   "PreviewInSolutionExplorer": false
 }
