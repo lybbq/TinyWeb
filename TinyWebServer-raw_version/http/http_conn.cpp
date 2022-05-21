@@ -3,6 +3,7 @@
 #include <map>
 #include <mysql/mysql.h>
 #include <fstream>
+#include <stdio.h>
 
 //#define connfdET //边缘触发非阻塞
 #define connfdLT //水平触发阻塞
@@ -22,7 +23,10 @@ const char *error_500_title = "Internal Error";
 const char *error_500_form = "There was an unusual problem serving the request file.\n";
 
 //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
-const char *doc_root = "/home/qgy/github/TinyWebServer/root";
+char doc_root[200];
+getcwd(doc_root, 200);
+char c_root[6] = "/root";
+strcat(doc_root,c_root);
 
 //将表中的用户名和密码放入map
 map<string, string> users;
@@ -362,7 +366,7 @@ http_conn::HTTP_CODE http_conn::process_read()
         text = get_line();
         m_start_line = m_checked_idx;
         LOG_INFO("%s", text);
-        Log::get_instance()->flush();
+        Log::get_instance()->flush();// 立刻写入
         switch (m_check_state)
         {
         case CHECK_STATE_REQUESTLINE:
