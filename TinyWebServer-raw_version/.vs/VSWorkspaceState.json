@@ -1,0 +1,13 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\CGImysql",
+    "\\http",
+    "\\lock",
+    "\\log",
+    "\\threadpool",
+    "\\timer"
+  ],
+  "SelectedNode": "\\CGImysql\\sql_connection_pool.cpp",
+  "PreviewInSolutionExplorer": false
+}
