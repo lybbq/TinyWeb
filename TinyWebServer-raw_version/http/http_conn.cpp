@@ -24,9 +24,6 @@ const char *error_500_form = "There was an unusual problem serving the request f
 
 //当浏览器出现连接重置时，可能是网站根目录出错或http响应格式出错或者访问的文件中内容完全为空
 char doc_root[200];
-getcwd(doc_root, 200);
-char c_root[6] = "/root";
-strcat(doc_root,c_root);
 
 //将表中的用户名和密码放入map
 map<string, string> users;
@@ -145,6 +142,12 @@ void http_conn::init(int sockfd, const sockaddr_in &addr)
     //int reuse=1;
     //setsockopt(m_sockfd,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(reuse));
     addfd(m_epollfd, sockfd, true);
+    // 目录
+    memset(doc_root,'\0',200);
+    getcwd(doc_root, 200);
+    char c_root[6] = "/root";
+    strcat(doc_root, c_root);
+    //
     m_user_count++;
     init();
 }
