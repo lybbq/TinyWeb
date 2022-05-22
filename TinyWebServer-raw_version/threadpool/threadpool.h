@@ -72,14 +72,14 @@ bool threadpool<T>::append(T *request)
     }
     m_workqueue.push_back(request);
     m_queuelocker.unlock();
-    m_queuestat.post(); // 简单的信号量传递出去
+    m_queuestat.post();
     return true;
 }
 template <typename T>
-void *threadpool<T>::worker(void *arg) // this 指针
+void *threadpool<T>::worker(void *arg)
 {
     threadpool *pool = (threadpool *)arg;
-    pool->run(); // run的还是本类。
+    pool->run();
     return pool;
 }
 template <typename T>
@@ -87,22 +87,22 @@ void threadpool<T>::run()
 {
     while (!m_stop)
     {
-        m_queuestat.wait(); // 信号量的等待
-        m_queuelocker.lock(); // 互斥量
+        m_queuestat.wait();
+        m_queuelocker.lock();
         if (m_workqueue.empty())
         {
             m_queuelocker.unlock();
             continue;
         }
-        T *request = m_workqueue.front(); // 取出队列前的数据
+        T *request = m_workqueue.front();
         m_workqueue.pop_front();
         m_queuelocker.unlock();
         if (!request)
             continue;
 
-        connectionRAII mysqlcon(&request->mysql, m_connPool); // 交给mysql
+        connectionRAII mysqlcon(&request->mysql, m_connPool);
         
-        request->process(); // 处理
+        request->process();
     }
 }
 #endif
