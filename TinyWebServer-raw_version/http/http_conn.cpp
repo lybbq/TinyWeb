@@ -297,7 +297,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-        strcat(m_url, "log.html");
+        strcat(m_url, "judge.html");
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
