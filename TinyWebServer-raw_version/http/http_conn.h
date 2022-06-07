@@ -102,7 +102,7 @@ private:
 public:
     static int m_epollfd;
     static int m_user_count;
-    MYSQL *mysql;
+    MYSQL *mysql; // 数据库
 
 private:
     int m_sockfd;
