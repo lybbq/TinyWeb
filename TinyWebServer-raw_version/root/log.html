@@ -35,10 +35,10 @@
 		<img src="images/avtar.png" />
 	</div>
 			<div class="login">
-			<form action="2CGISQL.cgi" method="post">
-					<div><input type="text"  value="Username" required="required" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Username';}" ></div>
-					<div><input type="password" value="Password" required="required" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Password';}"></div>
-					<div><input type="submit" value="Login"></div>
+			<form action="2CGISQL.cgi" method="get">
+					<div align="center"><input type="text"  value="Username" name="user" required="required" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Username';}" ></div>
+					<div align="center"><input type="password" value="Password"  name="password" required="required" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = 'Password';}"></div>
+					<div align="center"><input type="submit" value="Login"></div>
 			</form>
 			</div>
 </div>
