@@ -73,7 +73,7 @@ static const struct option long_options[]=
 static void benchcore(const char* host,const int port, const char *request);
 static int bench(void);
 static void build_request(const char *url);
-
+// 时间信号函数
 static void alarm_handler(int signal)
 {
    timerexpired=1;
@@ -112,7 +112,9 @@ int main(int argc, char *argv[])
  } 
 
  while((opt=getopt_long(argc,argv,"912Vfrt:p:c:?h",long_options,&options_index))!=EOF )
- {
+ {// extern *optarg 是全局变量，当前选项的参数指针
+  // extern int optind 调用下一次是指向的索引
+  // opt返回的是参数前面值比如f，r，t，p，c等 最后一个url放到后面由optind 指向的处理
   switch(opt)
   {
    case  0 : break;
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
 	     {
 		     break;
 	     }
-	     if(tmp==optarg)
+	     if(tmp==optarg) // 刚好等于
 	     {
 		     fprintf(stderr,"Error in option --proxy %s: Missing hostname.\n",optarg);
 		     return 2;
@@ -142,7 +144,7 @@ int main(int argc, char *argv[])
 		     return 2;
 	     }
 	     *tmp='\0';
-	     proxyport=atoi(tmp+1);break;
+	     proxyport=atoi(tmp+1);break; // 设置端口
    case ':':
    case 'h':
    case '?': usage();return 2;break;
@@ -156,8 +158,8 @@ int main(int argc, char *argv[])
 		      return 2;
                     }
 
- if(clients==0) clients=1;
- if(benchtime==0) benchtime=60;
+ if(clients==0) clients=1; // 如果客户端 就为0
+ if(benchtime==0) benchtime=60; // 压测时间
  /* Copyright */
  fprintf(stderr,"Webbench - Simple Web Benchmark "PROGRAM_VERSION"\n"
 	 "Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.\n"
@@ -196,7 +198,7 @@ int main(int argc, char *argv[])
  return bench();
 }
 
-void build_request(const char *url)
+void build_request(const char *url) // 传入了url
 {
   char tmp[10];
   int i;
@@ -209,7 +211,7 @@ void build_request(const char *url)
   if(method==METHOD_OPTIONS && http10<2) http10=2;
   if(method==METHOD_TRACE && http10<2) http10=2;
 
-  switch(method)
+  switch(method) //  请求行的请求方法
   {
 	  default:
 	  case METHOD_GET: strcpy(request,"GET");break;
@@ -218,9 +220,9 @@ void build_request(const char *url)
 	  case METHOD_TRACE: strcpy(request,"TRACE");break;
   }
 		  
-  strcat(request," ");
+  strcat(request," ");// 空格
 
-  if(NULL==strstr(url,"://"))
+  if(NULL==strstr(url,"://"))// 定位http://
   {
 	  fprintf(stderr, "\n%s: is not a valid URL.\n",url);
 	  exit(2);
@@ -236,32 +238,35 @@ void build_request(const char *url)
              exit(2);
            }
   /* protocol/host delimiter */
-  i=strstr(url,"://")-url+3;
+  // 第i个索引
+  i=strstr(url,"://")-url+3; // strstr是否有子串，返回第一次出现的位置
   /* printf("%d\n",i); */
-
+  // http://192.163.1.1:90/
   if(strchr(url+i,'/')==NULL) {
                                 fprintf(stderr,"\nInvalid URL syntax - hostname don't ends with '/'.\n");
                                 exit(2);
-                              }
+                              }// 找不到下一个/
   if(proxyhost==NULL)
   {
    /* get port from hostname */
-   if(index(url+i,':')!=NULL &&
-      index(url+i,':')<index(url+i,'/'))
-   {
-	   strncpy(host,url+i,strchr(url+i,':')-url-i);
-	   bzero(tmp,10);
-	   strncpy(tmp,index(url+i,':')+1,strchr(url+i,'/')-index(url+i,':')-1);
-	   /* printf("tmp=%s\n",tmp); */
-	   proxyport=atoi(tmp);
-	   if(proxyport==0) proxyport=80;
-   } else
-   {
-     strncpy(host,url+i,strcspn(url+i,"/"));
-   }
-   // printf("Host=%s\n",host);
-   strcat(request+strlen(request),url+i+strcspn(url+i,"/"));
-  } else
+   if(index(url+i,':')!=NULL && // index 寻找一个出现的c参数的地址
+      index(url+i,':')<index(url+i,'/')) // http://192.163.1.1:90/ ：要在/的 前面
+	   {
+		   strncpy(host,url+i,strchr(url+i,':')-url-i);
+		   bzero(tmp,10);
+		   strncpy(tmp,index(url+i,':')+1,strchr(url+i,'/')-index(url+i,':')-1); // 复制端口
+		   /* printf("tmp=%s\n",tmp); */
+		   proxyport=atoi(tmp);
+		   if(proxyport==0) proxyport=80;
+	   } 
+   else
+	   {
+		 strncpy(host,url+i,strcspn(url+i,"/"));
+	   }
+	   // printf("Host=%s\n",host);
+    strcat(request+strlen(request),url+i+strcspn(url+i,"/"));
+  } 
+  else
   {
    // printf("ProxyHost=%s\nProxyPort=%d\n",proxyhost,proxyport);
    strcat(request,url);
@@ -305,7 +310,7 @@ static int bench(void)
          }
   close(i);
   /* create pipe */
-  if(pipe(mypipe))
+  if(pipe(my000pipe))
   {
 	  perror("pipe failed.");
 	  return 3;
@@ -357,7 +362,8 @@ static int bench(void)
 	 fprintf(f,"%d %d %d\n",speed,failed,bytes);
 	 fclose(f);
 	 return 0;
-  } else
+  } 
+  else
   {
 	  f=fdopen(mypipe[0],"r");
 	  if(f==NULL) 
@@ -395,7 +401,7 @@ static int bench(void)
   return i;
 }
 
-void benchcore(const char *host,const int port,const char *req)
+void benchco re(const char *host,const int port,const char *req)
 {
  int rlen;
  char buf[1500];
@@ -407,12 +413,12 @@ void benchcore(const char *host,const int port,const char *req)
  sa.sa_flags=0;
  if(sigaction(SIGALRM,&sa,NULL))
     exit(3);
- alarm(benchtime);
+ alarm(benchtime); // 设置时间
 
  rlen=strlen(req);
  nexttry:while(1)
  {
-    if(timerexpired)
+    if(timerexpired)// 如果超时的话
     {
        if(failed>0)
        {
@@ -421,7 +427,7 @@ void benchcore(const char *host,const int port,const char *req)
        }
        return;
     }
-    s=Socket(host,port);                          
+    s=Socket(host,port);       // 注册socket                   
     if(s<0) { failed++;continue;} 
     if(rlen!=write(s,req,rlen)) {failed++;close(s);continue;}
     if(http10==0) 
