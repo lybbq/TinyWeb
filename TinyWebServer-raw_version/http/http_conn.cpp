@@ -532,7 +532,7 @@ http_conn::HTTP_CODE http_conn::do_request()
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);  // picture
     else if(this->login_show || strncasecmp(m_url, "/static", 7) == 0 ||strncasecmp(m_url, "/css", 4) == 0 || strncasecmp(m_url, "/font", 5) == 0 || strncasecmp(m_url, "/image", 6) == 0|| strncasecmp(m_url, "/js", 3) == 0 || strncasecmp(m_url, "/picture", 8) == 0)
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
-
+    std::cout << this->login_sign << endl;
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
     if (!(m_file_stat.st_mode & S_IROTH))
