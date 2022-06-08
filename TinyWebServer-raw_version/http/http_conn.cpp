@@ -530,7 +530,7 @@ http_conn::HTTP_CODE http_conn::do_request()
     }
     else if(this->login_sign)
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
-    else if(!this->login_sign && this->login_show)
+    else if(this->login_show)
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
 
     if (stat(m_real_file, &m_file_stat) < 0)
