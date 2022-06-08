@@ -524,6 +524,16 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
+<<<<<<< HEAD
+=======
+    else if(!this->login_sign)
+    {
+        char* m_url_real = (char*)malloc(sizeof(char) * 200);
+        strcpy(m_url_real, "/log.html");
+        strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
+        free(m_url_real);
+    }
+>>>>>>> bb84ef78e0c0b328855a2b5af2f7bf881ef5e93c
     else
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
     if (stat(m_real_file, &m_file_stat) < 0)
