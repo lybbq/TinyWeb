@@ -6,9 +6,10 @@
     "\\lock",
     "\\log",
     "\\root",
+    "\\root\\log",
     "\\threadpool",
     "\\timer"
   ],
-  "SelectedNode": "\\root\\about.html",
+  "SelectedNode": "\\root\\index1.html",
   "PreviewInSolutionExplorer": false
 }
