@@ -298,7 +298,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-       strcat(m_url, "index1.html");
+       strcat(m_url, "log.html");
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -461,7 +461,7 @@ http_conn::HTTP_CODE http_conn::do_request()
                 m_lock.unlock();
 
                 if (!res)
-                    strcpy(m_url, "/index1.html");
+                    strcpy(m_url, "/log.html");
                 else
                     strcpy(m_url, "/registerError.html");
             }
