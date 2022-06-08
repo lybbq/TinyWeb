@@ -298,7 +298,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-        strcat(m_url, "log.html");
+       strcat(m_url, "log.html");
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -524,16 +524,6 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
-<<<<<<< HEAD
-=======
-    else if(!this->login_sign)
-    {
-        char* m_url_real = (char*)malloc(sizeof(char) * 200);
-        strcpy(m_url_real, "/log.html");
-        strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
-        free(m_url_real);
-    }
->>>>>>> bb84ef78e0c0b328855a2b5af2f7bf881ef5e93c
     else
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
     if (stat(m_real_file, &m_file_stat) < 0)
