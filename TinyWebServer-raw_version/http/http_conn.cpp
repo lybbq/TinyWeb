@@ -529,8 +529,8 @@ http_conn::HTTP_CODE http_conn::do_request()
         free(m_url_real);
     }
     else if(this->login_sign)
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
-    else if(this->login_show)
+        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);  // picture
+    else if(this->login_show||strncasecmp(m_url, "/css", 4) == 0 || strncasecmp(m_url, "/font", 5) == 0 || strncasecmp(m_url, "/image", 6) == 0|| strncasecmp(m_url, "/js", 3) == 0 || strncasecmp(m_url, "/picture", 8) == 0)
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
 
     if (stat(m_real_file, &m_file_stat) < 0)
