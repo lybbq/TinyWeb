@@ -172,6 +172,7 @@ void http_conn::init()
     m_write_idx = 0;
     cgi = 0;
     login_sign = false;
+    login_show = false;
     memset(m_read_buf, '\0', READ_BUFFER_SIZE);
     memset(m_write_buf, '\0', WRITE_BUFFER_SIZE);
     memset(m_real_file, '\0', FILENAME_LEN);
@@ -298,7 +299,10 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-       strcat(m_url, "log.html");
+    {
+        strcat(m_url, "log.html");
+        this->login_show = true;
+    }
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -524,8 +528,11 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
-    else
+    else if(this->login_sign)
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
+    else if(!this->login_sign && this->login_show)
+        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
+
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
     if (!(m_file_stat.st_mode & S_IROTH))
