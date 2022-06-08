@@ -481,7 +481,9 @@ http_conn::HTTP_CODE http_conn::do_request()
                 strcpy(m_url, "/logError.html");
         }
     }
-
+    //if(!this->login_sign)
+	 //   return FORBIDDEN_REQUEST;
+    //
     if (*(p + 1) == '0')
     {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
@@ -522,16 +524,8 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
-    else if(!this->login_sign)
-    {
-        char* m_url_real = (char*)malloc(sizeof(char) * 200);
-        strcpy(m_url_real, "/log.html");
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
-        free(m_url_real);
-    }
     else
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
-
+        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
     if (!(m_file_stat.st_mode & S_IROTH))
