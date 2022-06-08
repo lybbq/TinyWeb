@@ -298,7 +298,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-        strcat(m_url, "log.html");
+       strcat(m_url, "log.html");
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -481,7 +481,9 @@ http_conn::HTTP_CODE http_conn::do_request()
                 strcpy(m_url, "/logError.html");
         }
     }
-
+    //if(!this->login_sign)
+	 //   return FORBIDDEN_REQUEST;
+    //
     if (*(p + 1) == '0')
     {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
@@ -523,8 +525,7 @@ http_conn::HTTP_CODE http_conn::do_request()
         free(m_url_real);
     }
     else
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
-
+        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1); 
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
     if (!(m_file_stat.st_mode & S_IROTH))
