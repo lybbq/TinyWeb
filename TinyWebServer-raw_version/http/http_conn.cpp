@@ -480,6 +480,7 @@ http_conn::HTTP_CODE http_conn::do_request()
             {
                 strcpy(m_url, "/index1.html");
                 this->login_sign = true;
+		//printf("log:%d\n",this->login_sign);
             }
             else
                 strcpy(m_url, "/logError.html");
@@ -528,10 +529,9 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
-    else if(this->login_sign)
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);  // picture
-    else if(this->login_show || strncasecmp(m_url, "/static", 7) == 0 ||strncasecmp(m_url, "/css", 4) == 0 || strncasecmp(m_url, "/images", 4) == 0)
+    else 
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
+    //printf("login:%d\n",login_sign);
     //LOG_INFO("%s", &);
     //std::cout << this->login_sign << endl;
     if (stat(m_real_file, &m_file_stat) < 0)
