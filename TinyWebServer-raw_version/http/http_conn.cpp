@@ -526,7 +526,7 @@ http_conn::HTTP_CODE http_conn::do_request()
     {
         char* m_url_real = (char*)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/log.html");
-        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
+        strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
         free(m_url_real);
     }
     else
