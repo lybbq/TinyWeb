@@ -124,6 +124,7 @@ private:
     char *m_file_address;
     struct stat m_file_stat;
     struct iovec m_iv[2];
+    bool login_sign;
     int m_iv_count;
     int cgi;        //是否启用的POST
     char *m_string; //存储请求头数据

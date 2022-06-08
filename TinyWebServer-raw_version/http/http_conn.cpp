@@ -149,7 +149,7 @@ void http_conn::init(int sockfd, const sockaddr_in &addr)
     strcat(doc_root, c_root);
     //
     m_user_count++;
-    init();
+    init(); // 内部的初始化
 }
 
 //初始化新接受的连接
@@ -171,6 +171,7 @@ void http_conn::init()
     m_read_idx = 0;
     m_write_idx = 0;
     cgi = 0;
+    login_sign = false;
     memset(m_read_buf, '\0', READ_BUFFER_SIZE);
     memset(m_write_buf, '\0', WRITE_BUFFER_SIZE);
     memset(m_real_file, '\0', FILENAME_LEN);
@@ -472,7 +473,10 @@ http_conn::HTTP_CODE http_conn::do_request()
         else if (*(p + 1) == '2')
         {
             if (users.find(name) != users.end() && users[name] == password)
+            {
                 strcpy(m_url, "/index1.html");
+                this->login_sign = true;
+            }
             else
                 strcpy(m_url, "/logError.html");
         }
@@ -516,6 +520,13 @@ http_conn::HTTP_CODE http_conn::do_request()
         strcpy(m_url_real, "/fans.html");
         strncpy(m_real_file + len, m_url_real, strlen(m_url_real));
 
+        free(m_url_real);
+    }
+    else if(!this->login_sign)
+    {
+        char* m_url_real = (char*)malloc(sizeof(char) * 200);
+        strcpy(m_url_real, "/log.html");
+        strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
         free(m_url_real);
     }
     else

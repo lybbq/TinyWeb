@@ -101,7 +101,7 @@ void threadpool<T>::run()
             continue;
         // 获取数据库
         connectionRAII mysqlcon(&request->mysql, m_connPool);
-        
+        // 处理客户
         request->process();
     }
 }
