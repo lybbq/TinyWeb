@@ -1,2 +1,1 @@
 Centos
-sss
