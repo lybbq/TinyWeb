@@ -99,9 +99,9 @@ void threadpool<T>::run()
         m_queuelocker.unlock();
         if (!request)
             continue;
-
+        // 获取数据库
         connectionRAII mysqlcon(&request->mysql, m_connPool);
-        
+        // 处理客户
         request->process();
     }
 }

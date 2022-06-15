@@ -33,7 +33,7 @@ void http_conn::initmysql_result(connection_pool *connPool)
 {
     //先从连接池中取一个连接
     MYSQL *mysql = NULL;
-    connectionRAII mysqlcon(&mysql, connPool);
+    connectionRAII mysqlcon(&mysql, connPool);// 用完自动释放
 
     //在user表中检索username，passwd数据，浏览器端输入
     if (mysql_query(mysql, "SELECT username,passwd FROM user"))
@@ -149,7 +149,7 @@ void http_conn::init(int sockfd, const sockaddr_in &addr)
     strcat(doc_root, c_root);
     //
     m_user_count++;
-    init();
+    init(); // 内部的初始化
 }
 
 //初始化新接受的连接
@@ -171,6 +171,8 @@ void http_conn::init()
     m_read_idx = 0;
     m_write_idx = 0;
     cgi = 0;
+    login_sign = false;
+    login_show = false;
     memset(m_read_buf, '\0', READ_BUFFER_SIZE);
     memset(m_write_buf, '\0', WRITE_BUFFER_SIZE);
     memset(m_real_file, '\0', FILENAME_LEN);
@@ -297,7 +299,10 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text)
         return BAD_REQUEST;
     //当url为/时，显示判断界面
     if (strlen(m_url) == 1)
-        strcat(m_url, "judge.html");
+    {
+        strcat(m_url, "log.html");
+        this->login_show = true;
+    }
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -472,12 +477,18 @@ http_conn::HTTP_CODE http_conn::do_request()
         else if (*(p + 1) == '2')
         {
             if (users.find(name) != users.end() && users[name] == password)
-                strcpy(m_url, "/welcome.html");
+            {
+                strcpy(m_url, "/index1.html");
+                this->login_sign = true;
+		//printf("log:%d\n",this->login_sign);
+            }
             else
                 strcpy(m_url, "/logError.html");
         }
     }
-
+    //if(!this->login_sign)
+	 //   return FORBIDDEN_REQUEST;
+    //
     if (*(p + 1) == '0')
     {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
@@ -518,9 +529,11 @@ http_conn::HTTP_CODE http_conn::do_request()
 
         free(m_url_real);
     }
-    else
+    else 
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
-
+    //printf("login:%d\n",login_sign);
+    //LOG_INFO("%s", &);
+    //std::cout << this->login_sign << endl;
     if (stat(m_real_file, &m_file_stat) < 0)
         return NO_RESOURCE;
     if (!(m_file_stat.st_mode & S_IROTH))

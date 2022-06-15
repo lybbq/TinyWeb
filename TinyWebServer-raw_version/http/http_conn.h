@@ -102,7 +102,7 @@ private:
 public:
     static int m_epollfd;
     static int m_user_count;
-    MYSQL *mysql;
+    MYSQL *mysql; // 数据库
 
 private:
     int m_sockfd;
@@ -124,7 +124,10 @@ private:
     char *m_file_address;
     struct stat m_file_stat;
     struct iovec m_iv[2];
+    bool login_sign;
+    bool login_show;
     int m_iv_count;
+
     int cgi;        //是否启用的POST
     char *m_string; //存储请求头数据
     int bytes_to_send;

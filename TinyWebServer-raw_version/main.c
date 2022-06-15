@@ -299,11 +299,11 @@ int main(int argc, char *argv[])
                 util_timer *timer = users_timer[sockfd].timer;
                 if (users[sockfd].read_once())
                 {
-                    LOG_INFO("deal with the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
+                    LOG_INFO("deal with the client(%s),port(%d)", inet_ntoa(users[sockfd].get_address()->sin_addr),sockfd);
                     Log::get_instance()->flush();
                     //若监测到读事件，将该事件放入请求队列
                     pool->append(users + sockfd);
-
+		    //printf("sockfd:%d",sockfd);
                     //若有数据传输，则将定时器往后延迟3个单位
                     //并对新的定时器在链表上的位置进行调整
                     if (timer)

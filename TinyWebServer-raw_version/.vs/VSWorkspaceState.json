@@ -5,8 +5,11 @@
     "\\http",
     "\\lock",
     "\\log",
+    "\\root",
+    "\\root\\log",
     "\\threadpool",
     "\\timer"
   ],
+  "SelectedNode": "\\root\\contact.html",
   "PreviewInSolutionExplorer": false
 }
